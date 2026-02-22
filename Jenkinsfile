@@ -55,11 +55,13 @@ post {
       sh '''
         curl -s -X POST http://192.168.1.86/CommonServices/discord \
         -H "Content-Type: application/json" \
-        -d "{
-          \"url\": \"$DISCORD_URL\",
-          \"key\": \"$DISCORD_KEY\",
-          \"content\": \"✅ $JOB_NAME #$BUILD_NUMBER deployed successfully to $SERVER_PATH\"
-        }"
+        --data @- <<EOF
+{
+  "url": "$DISCORD_URL",
+  "key": "$DISCORD_KEY",
+  "content": "✅ $JOB_NAME #$BUILD_NUMBER deployed successfully to $SERVER_PATH"
+}
+EOF
       '''
     }
   }
@@ -72,11 +74,13 @@ post {
       sh '''
         curl -s -X POST http://192.168.1.86/CommonServices/discord \
         -H "Content-Type: application/json" \
-        -d "{
-          \"url\": \"$DISCORD_URL\",
-          \"key\": \"$DISCORD_KEY\",
-          \"content\": \"❌ $JOB_NAME #$BUILD_NUMBER FAILED. Check Jenkins logs.\"
-        }"
+        --data @- <<EOF
+{
+  "url": "$DISCORD_URL",
+  "key": "$DISCORD_KEY",
+  "content": "❌ $JOB_NAME #$BUILD_NUMBER FAILED. Check Jenkins logs."
+}
+EOF
       '''
     }
   }

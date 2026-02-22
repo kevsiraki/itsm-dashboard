@@ -4,8 +4,8 @@ pipeline {
   environment {
     SERVER_HOST = "192.168.1.165"
     SERVER_USER = "kevinsiraki"
-    SERVER_PATH = "/var/www/testsite/analytics"     // <-- folder you specify
-    BUILD_DIR   = "dist"               // Vite = dist
+    SERVER_PATH = "/var/www/testsite/analytics"             // Destination of the app.
+    BUILD_DIR   = "dist"                                    // Vite project = dist
     SSH_CRED_ID = "bec2893a-7654-400a-b89f-83c918fc5997"
   }
 
@@ -20,7 +20,7 @@ pipeline {
       steps { sh 'npm ci' }
     }
 
-    stage('Build') {
+    stage('Build and Test') {
       steps {
         sh '''
           npm run build

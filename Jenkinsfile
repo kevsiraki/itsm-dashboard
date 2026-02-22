@@ -4,14 +4,15 @@ pipeline {
   environment {
     SERVER_HOST = "192.168.1.165"
     SERVER_USER = "kevinsiraki"
-    SERVER_PATH = "/var/www/testsite/analytics"             // Destination of the app.
-    BUILD_DIR   = "dist"                                    // Vite project = dist
+    SERVER_PATH = "/var/www/testsite/analytics"
+    BUILD_DIR   = "dist"
     SSH_CRED_ID = "bec2893a-7654-400a-b89f-83c918fc5997"
   }
 
   options { timestamps() }
 
   stages {
+
     stage('Checkout') {
       steps { checkout scm }
     }
@@ -39,6 +40,43 @@ pipeline {
               "${BUILD_DIR}/" "${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/"
           '''
         }
+      }
+    }
+  }
+
+  post {
+
+    success {
+      withCredentials([
+        string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL'),
+        string(credentialsId: 'discord-api-key', variable: 'DISCORD_KEY')
+      ]) {
+        sh """
+          curl -s -X POST http://192.168.1.86/CommonServices/discord \
+          -H "Content-Type: application/json" \
+          -d '{
+            "url": "${DISCORD_URL}",
+            "key": "${DISCORD_KEY}",
+            "content": "✅ ${JOB_NAME} #${BUILD_NUMBER} deployed successfully to ${SERVER_PATH}"
+          }'
+        """
+      }
+    }
+
+    failure {
+      withCredentials([
+        string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL'),
+        string(credentialsId: 'discord-api-key', variable: 'DISCORD_KEY')
+      ]) {
+        sh """
+          curl -s -X POST http://192.168.1.86/CommonServices/discord \
+          -H "Content-Type: application/json" \
+          -d '{
+            "url": "${DISCORD_URL}",
+            "key": "${DISCORD_KEY}",
+            "content": "❌ ${JOB_NAME} #${BUILD_NUMBER} FAILED. Check Jenkins logs."
+          }'
+        """
       }
     }
   }

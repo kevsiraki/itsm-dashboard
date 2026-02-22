@@ -2,17 +2,16 @@ pipeline {
   agent any
 
   environment {
-    SERVER_HOST = "192.168.1.165"
-    SERVER_USER = "kevinsiraki"
-    SERVER_PATH = "/var/www/testsite/analytics"
-    BUILD_DIR   = "dist"
-    SSH_CRED_ID = "bec2893a-7654-400a-b89f-83c918fc5997"
+    SERVER_HOST = '192.168.1.165'
+    SERVER_USER = 'kevinsiraki'
+    SERVER_PATH = '/var/www/testsite/analytics'
+    BUILD_DIR   = 'dist'
+    SSH_CRED_ID = 'bec2893a-7654-400a-b89f-83c918fc5997'
   }
 
   options { timestamps() }
 
   stages {
-
     stage('Checkout') {
       steps { checkout scm }
     }
@@ -44,15 +43,13 @@ pipeline {
     }
   }
 
-
-post {
-
-  success {
-    withCredentials([
+  post {
+    success {
+      withCredentials([
       string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL'),
       string(credentialsId: 'discord-api-key', variable: 'DISCORD_KEY')
     ]) {
-      sh '''
+        sh '''
         curl -s -X POST http://192.168.1.86/CommonServices/discord \
         -H "Content-Type: application/json" \
         --data @- <<EOF
@@ -64,14 +61,14 @@ post {
 EOF
       '''
     }
-  }
+    }
 
-  failure {
-    withCredentials([
+    failure {
+      withCredentials([
       string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL'),
       string(credentialsId: 'discord-api-key', variable: 'DISCORD_KEY')
     ]) {
-      sh '''
+        sh '''
         curl -s -X POST http://192.168.1.86/CommonServices/discord \
         -H "Content-Type: application/json" \
         --data @- <<EOF
@@ -83,6 +80,6 @@ EOF
 EOF
       '''
     }
+    }
   }
-}
 }

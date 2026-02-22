@@ -302,12 +302,14 @@ export default function App() {
       <div className="container">
         <div className="window-shell">
           <div className="window-toolbar">
+            {/* 
             <div className="traffic-lights" aria-hidden="true">
               <span className="light red"></span>
               <span className="light yellow"></span>
               <span className="light green"></span>
             </div>
-            <div className="window-title">Ops Command Center</div>
+            */}
+            <div className="window-title">ITSM Command Center</div>
             <div className="toolbar-actions">
               <button className="btn ghost" onClick={() => setPaused((v) => !v)}>
                 {paused ? 'Resume' : 'Pause'}

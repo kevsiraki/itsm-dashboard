@@ -128,7 +128,7 @@ export default function App() {
     }
 
     fetchData()
-    id = setInterval(fetchData, 3000)
+    id = setInterval(fetchData, 60000)
 
     return () => {
       mounted.current = false
@@ -321,7 +321,7 @@ export default function App() {
             <div>
               <h1>Ticket Intelligence Dashboard</h1>
               <p className="muted">
-                Live queue telemetry every 3s - Last sync: {lastUpdated ? lastUpdated.toLocaleTimeString() : '-'}
+                Live queue telemetry every 60s - Last sync: {lastUpdated ? lastUpdated.toLocaleTimeString() : '-'}
               </p>
             </div>
           </header>

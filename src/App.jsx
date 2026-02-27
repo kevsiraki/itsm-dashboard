@@ -99,9 +99,20 @@ export default function App() {
   const [error, setError] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [paused, setPaused] = useState(false)
+  const [theme, setTheme] = useState(() => {
+    const saved = typeof window !== 'undefined' ? window.localStorage.getItem('theme') : null
+    if (saved === 'light' || saved === 'dark') return saved
+    return 'dark'
+  })
   const mounted = useRef(true)
   const [query, setQuery] = useState('')
   const [sortBy, setSortBy] = useState({ key: 'created', dir: 'desc' })
+  const isDark = theme === 'dark'
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    window.localStorage.setItem('theme', theme)
+  }, [theme])
 
   useEffect(() => {
     mounted.current = true
@@ -259,6 +270,12 @@ export default function App() {
   }, [agesSec])
   const ageROC = useMemo(() => Math.round((rateOfChange(agesSec) || 0) * 100), [agesSec])
   const ageSharpe = useMemo(() => Number(sharpeLike(agesSec).toFixed(2)), [agesSec])
+  const closureGap = useMemo(() => metrics.open - metrics.closed, [metrics.open, metrics.closed])
+  const riskLevel = useMemo(() => {
+    if (metrics.breachRate >= 25 || metrics.emergency >= 5) return 'Critical'
+    if (metrics.breachRate >= 12 || metrics.emergency >= 2) return 'Elevated'
+    return 'Stable'
+  }, [metrics.breachRate, metrics.emergency])
 
   const slaBreaches = useMemo(
     () =>
@@ -297,18 +314,33 @@ export default function App() {
     return arr
   }, [tickets, query, sortBy])
 
+  const chartTick = isDark ? '#a7b7ce' : '#42516a'
+  const chartGrid = isDark ? 'rgba(180, 197, 224, 0.18)' : 'rgba(37, 58, 92, 0.15)'
+  const tooltipProps = {
+    contentStyle: {
+      background: isDark ? '#162338' : '#ffffff',
+      color: isDark ? '#f2f6ff' : '#122033',
+      border: isDark ? '1px solid rgba(193, 208, 235, 0.34)' : '1px solid rgba(59, 84, 126, 0.26)',
+      borderRadius: '10px',
+      boxShadow: isDark ? '0 12px 32px rgba(0,0,0,0.32)' : '0 10px 28px rgba(18,31,55,0.15)',
+    },
+    labelStyle: {
+      color: isDark ? '#f2f6ff' : '#1c2d44',
+      fontWeight: 600,
+    },
+    itemStyle: {
+      color: isDark ? '#dbe7ff' : '#243a59',
+    },
+  }
+
   return (
     <div className="app">
       <div className="container">
         <div className="window-shell">
           <div className="window-toolbar">
-             
-            <div className="traffic-lights" aria-hidden="true">
-              <span className="light red"></span>
-              <span className="light yellow"></span>
-              <span className="light green"></span>
-            </div>
-            
+            <button className="theme-toggle" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}>
+              {isDark ? 'Light Mode' : 'Dark Mode'}
+            </button>
             <div className="window-title">ITSM Command Center</div>
             <div className="toolbar-actions">
               <button className="btn ghost" onClick={() => setPaused((v) => !v)}>
@@ -318,13 +350,50 @@ export default function App() {
           </div>
 
           <header className="app-header hero">
-            <div>
-              <h1>Ticket Intelligence Dashboard</h1>
+            <div className="header-copy">
+              <div className="eyebrow">Executive Operations Briefing</div>
+              <h1>Ticket Intelligence Command Deck</h1>
               <p className="muted">
                 Live queue telemetry every 60s - Last sync: {lastUpdated ? lastUpdated.toLocaleTimeString() : '-'}
               </p>
             </div>
+            <div className="hero-meta">
+              <div className="meta-card">
+                <div className="meta-label">Operational Risk</div>
+                <div className={`meta-value risk-${riskLevel.toLowerCase()}`}>{riskLevel}</div>
+              </div>
+              <div className="meta-card">
+                <div className="meta-label">SLA Exposure</div>
+                <div className="meta-value">{metrics.breachRate}%</div>
+              </div>
+              <div className="meta-card">
+                <div className="meta-label">Open-Closed Delta</div>
+                <div className="meta-value">{closureGap >= 0 ? `+${closureGap}` : closureGap}</div>
+              </div>
+            </div>
           </header>
+
+          <section className="executive-strip">
+            <div className="exec-item">
+              <span className="exec-label">Queue Pressure</span>
+              <span className="exec-value">{metrics.openRate}% open</span>
+            </div>
+            <div className="exec-divider"></div>
+            <div className="exec-item">
+              <span className="exec-label">Critical Tickets</span>
+              <span className="exec-value">{metrics.emergency}</span>
+            </div>
+            <div className="exec-divider"></div>
+            <div className="exec-item">
+              <span className="exec-label">Median Ticket Age</span>
+              <span className="exec-value">{formatHours(p50)}</span>
+            </div>
+            <div className="exec-divider"></div>
+            <div className="exec-item">
+              <span className="exec-label">Throughput Signal</span>
+              <span className="exec-value">{ageROC >= 0 ? `+${ageROC}%` : `${ageROC}%`}</span>
+            </div>
+          </section>
 
           <section className="kpi-row">
             <KPI label="Total Tickets" value={metrics.total} delta={`Open rate ${metrics.openRate}%`} color="blue">
@@ -375,10 +444,10 @@ export default function App() {
                         <stop offset="95%" stopColor="#64d2ff" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 6" stroke="rgba(37, 39, 43, 0.15)" />
-                    <XAxis dataKey="day" tick={{ fill: '#6e6e73' }} />
-                    <YAxis tick={{ fill: '#6e6e73' }} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} />
+                    <XAxis dataKey="day" tick={{ fill: chartTick }} />
+                    <YAxis tick={{ fill: chartTick }} />
+                    <Tooltip {...tooltipProps} />
                     <Legend />
                     <Area type="monotone" dataKey="count" stroke="#0a84ff" fill="url(#volumeGlow)" name="Daily count" />
                     <Line type="monotone" dataKey="ma" stroke="#30d158" strokeWidth={2} dot={false} name="Moving avg" />
@@ -397,7 +466,7 @@ export default function App() {
                         <Cell key={`status-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip {...tooltipProps} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -409,10 +478,10 @@ export default function App() {
               <div className="chart">
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={priorityData} margin={{ top: 8, right: 14, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 6" stroke="rgba(37, 39, 43, 0.15)" />
-                    <XAxis dataKey="name" tick={{ fill: '#6e6e73' }} />
-                    <YAxis tick={{ fill: '#6e6e73' }} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} />
+                    <XAxis dataKey="name" tick={{ fill: chartTick }} />
+                    <YAxis tick={{ fill: chartTick }} />
+                    <Tooltip {...tooltipProps} />
                     <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                       {priorityData.map((entry) => (
                         <Cell key={`priority-${entry.name}`} fill={entry.color} />
@@ -428,10 +497,10 @@ export default function App() {
               <div className="chart mini">
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={deptData} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 6" stroke="rgba(37, 39, 43, 0.15)" />
-                    <XAxis dataKey="dept" tick={{ fill: '#6e6e73' }} />
-                    <YAxis tick={{ fill: '#6e6e73' }} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} />
+                    <XAxis dataKey="dept" tick={{ fill: chartTick }} />
+                    <YAxis tick={{ fill: chartTick }} />
+                    <Tooltip {...tooltipProps} />
                     <Bar dataKey="count" fill="#5e5ce6" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

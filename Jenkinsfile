@@ -1,5 +1,10 @@
 pipeline {
-  agent any
+  agent {
+    docker {
+      image 'node:latest'
+      args '-u root:root'
+    }
+  }
 
   environment {
     SERVER_HOST = '192.168.1.165'

@@ -43,55 +43,92 @@ export default function TicketsTable({
       {error && <div className="status error">Unable to load ticket data: {error}</div>}
 
       {!loading && !error && (
-        <div className="table-wrap">
-          <table className="tickets">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Number</th>
-                <th>Priority</th>
-                <th>Subject</th>
-                <th>Status</th>
-                <th>Dept</th>
-                <th>Created</th>
-                <th>Requester</th>
-                <th>Summary</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.length === 0 && (
+        <>
+          <div className="table-wrap">
+            <table className="tickets">
+              <thead>
                 <tr>
-                  <td colSpan={9} className="status">
-                    No tickets match the current filters.
-                  </td>
+                  <th>ID</th>
+                  <th>Number</th>
+                  <th>Priority</th>
+                  <th>Subject</th>
+                  <th>Status</th>
+                  <th>Dept</th>
+                  <th>Created</th>
+                  <th>Requester</th>
+                  <th>Summary</th>
                 </tr>
-              )}
-              {visible.map((t) => {
-                const pLabel = priorityLabel(t.priority_id)
-                return (
-                  <tr key={t.id}>
-                    <td data-label="ID">{t.id}</td>
-                    <td data-label="Ticket Number">{t.number}</td>
-                    <td data-label="Priority">
-                      <span className={`priority-pill p-${pLabel.toLowerCase()}`}>{pLabel}</span>
+              </thead>
+              <tbody>
+                {visible.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="status">
+                      No tickets match the current filters.
                     </td>
-                    <td data-label="Subject" className="subject">{t.subject}</td>
-                    <td data-label="Status">
-                      <div className="status-cell">
-                        <span className={`dot ${statusDot(t.status)}`}></span>
-                        <span className="status-text">{t.status}</span>
-                      </div>
-                    </td>
-                    <td data-label="Department">{t.dept}</td>
-                    <td data-label="Created">{prettyDate(t.created)}</td>
-                    <td data-label="Requester">{t.user?.name?.name || t.user?.email?.email || '-'}</td>
-                    <td data-label="Summary" className="message">{t.message}</td>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                )}
+                {visible.map((t) => {
+                  const pLabel = priorityLabel(t.priority_id)
+                  return (
+                    <tr key={t.id}>
+                      <td data-label="ID">{t.id}</td>
+                      <td data-label="Ticket Number">{t.number}</td>
+                      <td data-label="Priority">
+                        <span className={`priority-pill p-${pLabel.toLowerCase()}`}>{pLabel}</span>
+                      </td>
+                      <td data-label="Subject" className="subject">{t.subject}</td>
+                      <td data-label="Status">
+                        <div className="status-cell">
+                          <span className={`dot ${statusDot(t.status)}`}></span>
+                          <span className="status-text">{t.status}</span>
+                        </div>
+                      </td>
+                      <td data-label="Department">{t.dept}</td>
+                      <td data-label="Created">{prettyDate(t.created)}</td>
+                      <td data-label="Requester">{t.user?.name?.name || t.user?.email?.email || '-'}</td>
+                      <td data-label="Summary" className="message">{t.message}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="tickets-mobile">
+            {visible.length === 0 && <div className="status">No tickets match the current filters.</div>}
+            {visible.map((t) => {
+              const pLabel = priorityLabel(t.priority_id)
+              return (
+                <article key={`mobile-${t.id}`} className="ticket-card">
+                  <div className="ticket-card-top">
+                    <div className="ticket-id">#{t.number || t.id}</div>
+                    <span className={`priority-pill p-${pLabel.toLowerCase()}`}>{pLabel}</span>
+                  </div>
+                  <h4 className="ticket-subject">{t.subject || 'Untitled ticket'}</h4>
+                  <div className="ticket-status">
+                    <span className={`dot ${statusDot(t.status)}`}></span>
+                    <span className="status-text">{t.status || 'Unknown'}</span>
+                  </div>
+                  <p className="ticket-message">{t.message || 'No summary available.'}</p>
+                  <div className="ticket-meta">
+                    <div>
+                      <span className="ticket-meta-label">Requester</span>
+                      <span className="ticket-meta-value">{t.user?.name?.name || t.user?.email?.email || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="ticket-meta-label">Department</span>
+                      <span className="ticket-meta-value">{t.dept || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="ticket-meta-label">Created</span>
+                      <span className="ticket-meta-value">{prettyDate(t.created)}</span>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </>
       )}
     </main>
   )

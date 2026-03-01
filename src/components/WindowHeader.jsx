@@ -55,8 +55,8 @@ export default function WindowHeader({
 
       <section className="executive-strip">
         <div className="exec-item">
-          <span className="exec-label">Active Queue Pressure</span>
-          <span className="exec-value">{openRate}% open tickets</span>
+          <span className="exec-label">Queue Pressure</span>
+          <span className="exec-value">{openRate}% open</span>
         </div>
         <div className="exec-divider"></div>
         <div className="exec-item">

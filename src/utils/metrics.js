@@ -52,11 +52,35 @@ export function secondsSinceCreated(created) {
 
 export function exportCSV(rows = [], filename = 'export.csv') {
   if (!rows || !rows.length) return
+
+  const stringifyValue = (key, value) => {
+    if (value == null) return ''
+    if (typeof value !== 'object') return String(value)
+
+    // osTicket payloads often store requester data under user.name.name/user.email.email.
+    if (key === 'user') {
+      return value?.name?.name || value?.email?.email || value?.username || value?.name || ''
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => stringifyValue(key, item)).join('; ')
+    }
+
+    if ('name' in value && typeof value.name === 'string') return value.name
+    if ('email' in value && typeof value.email === 'string') return value.email
+
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return String(value)
+    }
+  }
+
   const keys = Object.keys(rows[0])
   const csv = [keys.join(',')]
   for (const r of rows) {
     const line = keys.map((k) => {
-      const v = r[k] == null ? '' : String(r[k]).replace(/"/g, '""')
+      const v = stringifyValue(k, r[k]).replace(/"/g, '""')
       return `"${v.replace(/\n/g, ' ')}"`
     })
     csv.push(line.join(','))

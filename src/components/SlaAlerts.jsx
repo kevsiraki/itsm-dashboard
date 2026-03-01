@@ -3,6 +3,7 @@ import { secondsSinceCreated } from '../utils/metrics'
 import { prettyDate } from '../utils/ticketHelpers'
 
 export default function SlaAlerts({ slaBreaches }) {
+  
   return (
     <aside className="alerts">
       <h4>Active SLA Breaches</h4>

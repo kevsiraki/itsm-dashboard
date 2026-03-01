@@ -17,6 +17,15 @@ pipeline {
   options { timestamps() }
 
   stages {
+    stage('Install System Tools') {
+      steps {
+        sh '''
+          apt-get update
+          apt-get install -y rsync openssh-client
+        '''
+      }
+  }
+
     stage('Checkout') {
       steps { checkout scm }
     }

@@ -727,6 +727,23 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .window-toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 0;
+  }
+
+  .window-title {
+    order: 3;
+    width: 100%;
+    text-align: center;
+  }
+
+  .theme-toggle,
+  .btn {
+    min-height: 40px;
+  }
+
   .search {
     min-width: 170px;
     width: 100%;
@@ -740,6 +757,7 @@ button {
   .actions {
     justify-content: space-between;
     flex-wrap: wrap;
+    row-gap: 8px;
   }
 }
 
@@ -763,5 +781,131 @@ button {
 
   .quant-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .exec-item {
+    padding-inline: 0;
+  }
+
+  .table-area {
+    margin-top: 12px;
+  }
+
+  .table-controls {
+    gap: 0.75rem;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions .btn,
+  .actions select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header h1 {
+    font-size: clamp(1.25rem, 6vw, 1.6rem);
+  }
+
+  .muted {
+    font-size: 0.86rem;
+  }
+
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+
+  .panel,
+  .alerts {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .tickets {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+  }
+
+  .tickets thead {
+    display: none;
+  }
+
+  .tickets tbody,
+  .tickets tr,
+  .tickets td {
+    display: block;
+    width: 100%;
+  }
+
+  .tickets tbody tr {
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow);
+    padding: 2px 0;
+  }
+
+  .tickets td {
+    border-bottom: 1px solid rgba(191, 204, 229, 0.1);
+    padding: 0.6rem 0.75rem;
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tickets td::before {
+    content: attr(data-label);
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.62rem;
+    font-weight: 600;
+  }
+
+  .tickets td:last-child {
+    border-bottom: 0;
+  }
+
+  .tickets td.status {
+    display: block;
+  }
+
+  .tickets td.status::before {
+    content: "";
+    display: none;
+  }
+
+  .tickets td[data-label]:nth-child(1),
+  .tickets td[data-label]:nth-child(6) {
+    display: none;
+  }
+
+  .subject,
+  .message {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.4;
+  }
+
+  .status-cell {
+    gap: 0.4rem;
+  }
+
+  .pill {
+    font-size: 0.72rem;
   }
 }

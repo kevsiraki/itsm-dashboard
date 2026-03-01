@@ -70,22 +70,22 @@ export default function TicketsTable({
                 const pLabel = priorityLabel(t.priority_id)
                 return (
                   <tr key={t.id}>
-                    <td>{t.id}</td>
-                    <td>{t.number}</td>
-                    <td>
+                    <td data-label="ID">{t.id}</td>
+                    <td data-label="Ticket Number">{t.number}</td>
+                    <td data-label="Priority">
                       <span className={`priority-pill p-${pLabel.toLowerCase()}`}>{pLabel}</span>
                     </td>
-                    <td className="subject">{t.subject}</td>
-                    <td>
+                    <td data-label="Subject" className="subject">{t.subject}</td>
+                    <td data-label="Status">
                       <div className="status-cell">
                         <span className={`dot ${statusDot(t.status)}`}></span>
                         <span className="status-text">{t.status}</span>
                       </div>
                     </td>
-                    <td>{t.dept}</td>
-                    <td>{prettyDate(t.created)}</td>
-                    <td>{t.user?.name?.name || t.user?.email?.email || '-'}</td>
-                    <td className="message">{t.message}</td>
+                    <td data-label="Department">{t.dept}</td>
+                    <td data-label="Created">{prettyDate(t.created)}</td>
+                    <td data-label="Requester">{t.user?.name?.name || t.user?.email?.email || '-'}</td>
+                    <td data-label="Summary" className="message">{t.message}</td>
                   </tr>
                 )
               })}

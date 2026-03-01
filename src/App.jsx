@@ -352,7 +352,7 @@ export default function App() {
           <header className="app-header hero">
             <div className="header-copy">
               <div className="eyebrow">ITSM Dashboard</div>
-              <h1>Ticket Intelligence Command Deck</h1>
+              <h1>Ticket Command Deck</h1>
               <p className="muted">
                 Live queue telemetry every 60s - Last sync: {lastUpdated ? lastUpdated.toLocaleTimeString() : '-'}
               </p>

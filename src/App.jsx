@@ -351,7 +351,7 @@ export default function App() {
 
           <header className="app-header hero">
             <div className="header-copy">
-              <div className="eyebrow">osTicket Dashboard</div>
+              <div className="eyebrow">osTicket Dashboards</div>
               <h1>Ticket Command Deck</h1>
               <p className="muted">
                 Live queue telemetry every 60s - Last sync: {lastUpdated ? lastUpdated.toLocaleTimeString() : '-'}

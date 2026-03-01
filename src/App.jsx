@@ -1,97 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  CartesianGrid,
-  Legend,
-  LineChart,
-  Line,
-} from 'recharts'
+import { API_URL, PRIORITY_COLORS, SLA_SECONDS, STATUS_COLORS } from './constants/dashboard'
 import {
   percentile,
   movingAverage,
   groupByHour,
   secondsSinceCreated,
-  exportCSV,
   stddev,
   ewma,
   zscore,
   rateOfChange,
   sharpeLike,
 } from './utils/metrics'
-
-const API_URL =
-  'https://demo.kevinsiraki.com/CommonServices/osticket?key=Fz%402%24%5EkTn!X8!B0eM1qWz%40Jr0Hf8jS6V!R2X1H9!fZb7eW8!g1c8'
-
-const STATUS_COLORS = ['#34c759', '#ff9f0a', '#ff3b30', '#8e8e93']
-const PRIORITY_COLORS = {
-  Low: '#30d158',
-  Normal: '#64d2ff',
-  High: '#ff9f0a',
-  Emergency: '#ff453a',
-}
-const SLA_SECONDS = 48 * 3600
-
-function parseDate(s) {
-  if (!s) return null
-  const iso = s.includes(' ') ? s.replace(' ', 'T') : s
-  const d = new Date(iso)
-  if (isNaN(d)) return null
-  return d
-}
-
-function prettyDate(s) {
-  const d = parseDate(s)
-  return d ? d.toLocaleString() : s
-}
-
-function statusDot(status) {
-  const s = (status || '').toLowerCase()
-  if (s.includes('open')) return 'green'
-  if (s.includes('pend')) return 'yellow'
-  if (s.includes('clos')) return 'gray'
-  return 'gray'
-}
-
-function priorityLabel(priorityId) {
-  const map = {
-    1: 'Low',
-    2: 'Normal',
-    3: 'High',
-    4: 'Emergency',
-  }
-  const id = Number(priorityId)
-  return map[id] || String(priorityId || '-')
-}
-
-function KPI({ label, value, delta, color, children }) {
-  return (
-    <div className="kpi">
-      <div className="kpi-head">
-        <div className={`dot ${color}`}></div>
-        <div className="kpi-label">{label}</div>
-      </div>
-      <div className="kpi-value">{value}</div>
-      {delta != null && <div className="kpi-delta">{delta}</div>}
-      {children ? <div className="kpi-spark">{children}</div> : null}
-    </div>
-  )
-}
-
-function formatHours(seconds) {
-  if (!seconds || Number.isNaN(seconds)) return '0h'
-  return `${Math.round(seconds / 3600)}h`
-}
+import { formatHours, parseDate, priorityLabel } from './utils/ticketHelpers'
+import WindowHeader from './components/WindowHeader'
+import KpiRow from './components/KpiRow'
+import ChartsPanel from './components/ChartsPanel'
+import QuantMetrics from './components/QuantMetrics'
+import TicketsTable from './components/TicketsTable'
+import SlaAlerts from './components/SlaAlerts'
 
 export default function App() {
   const [tickets, setTickets] = useState([])
@@ -106,7 +33,7 @@ export default function App() {
   })
   const mounted = useRef(true)
   const [query, setQuery] = useState('')
-  const [sortBy, setSortBy] = useState({ key: 'created', dir: 'desc' })
+  const [sortBy, setSortBy] = useState({ key: 'created', dir: 'asc' })
   const isDark = theme === 'dark'
 
   useEffect(() => {
@@ -271,6 +198,11 @@ export default function App() {
   const ageROC = useMemo(() => Math.round((rateOfChange(agesSec) || 0) * 100), [agesSec])
   const ageSharpe = useMemo(() => Number(sharpeLike(agesSec).toFixed(2)), [agesSec])
   const closureGap = useMemo(() => metrics.open - metrics.closed, [metrics.open, metrics.closed])
+  const p50Hours = useMemo(() => formatHours(p50), [p50])
+  const p90Hours = useMemo(() => formatHours(p90), [p90])
+  const p99Hours = useMemo(() => formatHours(p99), [p99])
+  const ageEwmaHours = useMemo(() => formatHours(ageEWMA), [ageEWMA])
+  const ageStdHours = useMemo(() => formatHours(ageStd), [ageStd])
   const riskLevel = useMemo(() => {
     if (metrics.breachRate >= 25 || metrics.emergency >= 5) return 'Critical'
     if (metrics.breachRate >= 12 || metrics.emergency >= 2) return 'Elevated'
@@ -337,310 +269,55 @@ export default function App() {
     <div className="app">
       <div className="container">
         <div className="window-shell">
-          <div className="window-toolbar">
-            <button className="theme-toggle" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}>
-              {isDark ? 'Light Mode' : 'Dark Mode'}
-            </button>
-            <div className="window-title">ITSM Command Center</div>
-            <div className="toolbar-actions">
-              <button className="btn ghost" onClick={() => setPaused((v) => !v)}>
-                {paused ? 'Resume' : 'Pause'}
-              </button>
-            </div>
-          </div>
+          <WindowHeader
+            isDark={isDark}
+            paused={paused}
+            setTheme={setTheme}
+            setPaused={setPaused}
+            lastUpdated={lastUpdated}
+            riskLevel={riskLevel}
+            breachRate={metrics.breachRate}
+            closureGap={closureGap}
+            openRate={metrics.openRate}
+            emergency={metrics.emergency}
+            p50Hours={p50Hours}
+            ageROC={ageROC}
+          />
 
-          <header className="app-header hero">
-            <div className="header-copy">
-              <div className="eyebrow">osTicket Dashboards</div>
-              <h1>Ticket Command Deck</h1>
-              <p className="muted">
-                Live queue telemetry every 60s - Last sync: {lastUpdated ? lastUpdated.toLocaleTimeString() : '-'}
-              </p>
-            </div>
-            <div className="hero-meta">
-              <div className="meta-card">
-                <div className="meta-label">Operational Risk</div>
-                <div className={`meta-value risk-${riskLevel.toLowerCase()}`}>{riskLevel}</div>
-              </div>
-              <div className="meta-card">
-                <div className="meta-label">SLA Exposure</div>
-                <div className="meta-value">{metrics.breachRate}%</div>
-              </div>
-              <div className="meta-card">
-                <div className="meta-label">Open-Closed Delta</div>
-                <div className="meta-value">{closureGap >= 0 ? `+${closureGap}` : closureGap}</div>
-              </div>
-            </div>
-          </header>
+          <KpiRow metrics={metrics} trendData={trendData} throughput={throughput} p99Hours={p99Hours} />
 
-          <section className="executive-strip">
-            <div className="exec-item">
-              <span className="exec-label">Queue Pressure</span>
-              <span className="exec-value">{metrics.openRate}% open</span>
-            </div>
-            <div className="exec-divider"></div>
-            <div className="exec-item">
-              <span className="exec-label">Critical Tickets</span>
-              <span className="exec-value">{metrics.emergency}</span>
-            </div>
-            <div className="exec-divider"></div>
-            <div className="exec-item">
-              <span className="exec-label">Median Ticket Age</span>
-              <span className="exec-value">{formatHours(p50)}</span>
-            </div>
-            <div className="exec-divider"></div>
-            <div className="exec-item">
-              <span className="exec-label">Throughput Signal</span>
-              <span className="exec-value">{ageROC >= 0 ? `+${ageROC}%` : `${ageROC}%`}</span>
-            </div>
-          </section>
+          <ChartsPanel
+            trendData={trendData}
+            statusData={statusData}
+            priorityData={priorityData}
+            deptData={deptData}
+            chartTick={chartTick}
+            chartGrid={chartGrid}
+            tooltipProps={tooltipProps}
+          />
 
-          <section className="kpi-row">
-            <KPI label="Total Tickets" value={metrics.total} delta={`Open rate ${metrics.openRate}%`} color="blue">
-              <ResponsiveContainer width="100%" height={36}>
-                <LineChart data={trendData}>
-                  <Line type="monotone" dataKey="count" stroke="#64d2ff" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </KPI>
+          {/*<QuantMetrics
+            p50Hours={p50Hours}
+            p90Hours={p90Hours}
+            p99Hours={p99Hours}
+            ageEwmaHours={ageEwmaHours}
+            ageStdHours={ageStdHours}
+            ageZ={ageZ}
+            ageROC={ageROC}
+            ageSharpe={ageSharpe}
+          />*/}
 
-            <KPI label="Open Queue" value={metrics.open} delta={`${metrics.pending} pending`} color="green">
-              <ResponsiveContainer width="100%" height={36}>
-                <AreaChart data={throughput}>
-                  <Area type="monotone" dataKey="count" stroke="#34c759" fill="#34c759" fillOpacity={0.16} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </KPI>
+          <TicketsTable
+            loading={loading}
+            error={error}
+            query={query}
+            setQuery={setQuery}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            visible={visible}
+          />
 
-            <KPI label="Closed" value={metrics.closed} delta={`Close rate ${metrics.closedRate}%`} color="gray">
-              <ResponsiveContainer width="100%" height={36}>
-                <LineChart data={throughput}>
-                  <Line type="monotone" dataKey="ma" stroke="#8e8e93" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </KPI>
-
-            <KPI label="High Priority" value={metrics.highPrio} delta={`P99 ${formatHours(p99)}`} color="yellow">
-              <ResponsiveContainer width="100%" height={36}>
-                <LineChart data={throughput}>
-                  <Line type="monotone" dataKey="count" stroke="#ff9f0a" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </KPI>
-
-            <KPI label="Emergency" value={metrics.emergency} delta={`${metrics.breachRate}% breach risk`} color="red" />
-            <KPI label="Avg Ticket Age" value={metrics.avgAge} delta={`${metrics.breaches} SLA breaches`} color="blue" />
-          </section>
-
-          <section className="panels">
-            <div className="panel left">
-              <h3>Ticket Volume Trend</h3>
-              <div className="chart">
-                <ResponsiveContainer width="100%" height={220}>
-                  <AreaChart data={trendData} margin={{ top: 8, right: 14, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="volumeGlow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#64d2ff" stopOpacity={0.45} />
-                        <stop offset="95%" stopColor="#64d2ff" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} />
-                    <XAxis dataKey="day" tick={{ fill: chartTick }} />
-                    <YAxis tick={{ fill: chartTick }} />
-                    <Tooltip {...tooltipProps} />
-                    <Legend />
-                    <Area type="monotone" dataKey="count" stroke="#0a84ff" fill="url(#volumeGlow)" name="Daily count" />
-                    <Line type="monotone" dataKey="ma" stroke="#30d158" strokeWidth={2} dot={false} name="Moving avg" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="panel right">
-              <h3>Status Distribution</h3>
-              <div className="chart mini">
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={78} paddingAngle={3}>
-                      {statusData.map((entry, index) => (
-                        <Cell key={`status-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip {...tooltipProps} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="panel left">
-              <h3>Priority Pressure</h3>
-              <div className="chart">
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={priorityData} margin={{ top: 8, right: 14, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} />
-                    <XAxis dataKey="name" tick={{ fill: chartTick }} />
-                    <YAxis tick={{ fill: chartTick }} />
-                    <Tooltip {...tooltipProps} />
-                    <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                      {priorityData.map((entry) => (
-                        <Cell key={`priority-${entry.name}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="panel right">
-              <h3>Department Load</h3>
-              <div className="chart mini">
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={deptData} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} />
-                    <XAxis dataKey="dept" tick={{ fill: chartTick }} />
-                    <YAxis tick={{ fill: chartTick }} />
-                    <Tooltip {...tooltipProps} />
-                    <Bar dataKey="count" fill="#5e5ce6" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </section>
-
-          <section className="quant panel">
-            <h3>Quant Metrics</h3>
-            <div className="quant-grid">
-              <div className="quant-card">
-                <div className="quant-title">P50 Age</div>
-                <div className="quant-value">{formatHours(p50)}</div>
-              </div>
-              <div className="quant-card">
-                <div className="quant-title">P90 Age</div>
-                <div className="quant-value">{formatHours(p90)}</div>
-              </div>
-              <div className="quant-card">
-                <div className="quant-title">P99 Age</div>
-                <div className="quant-value">{formatHours(p99)}</div>
-              </div>
-              <div className="quant-card">
-                <div className="quant-title">EWMA Age</div>
-                <div className="quant-value">{formatHours(ageEWMA)}</div>
-              </div>
-              <div className="quant-card">
-                <div className="quant-title">Std Dev</div>
-                <div className="quant-value">{formatHours(ageStd)}</div>
-              </div>
-              <div className="quant-card">
-                <div className="quant-title">Z-Score</div>
-                <div className="quant-value">{ageZ}</div>
-              </div>
-              <div className="quant-card">
-                <div className="quant-title">Rate of Change</div>
-                <div className="quant-value">{ageROC}%</div>
-              </div>
-              <div className="quant-card">
-                <div className="quant-title">Sharpe-like</div>
-                <div className="quant-value">{ageSharpe}</div>
-              </div>
-            </div>
-          </section>
-
-          <main className="table-area">
-            <div className="table-controls">
-              <input
-                className="search"
-                placeholder="Search subject, number, user..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              <div className="actions">
-                <button className="btn" onClick={() => exportCSV(visible, 'tickets.csv')}>
-                  Export CSV
-                </button>
-                <div className="small-muted">Sort:</div>
-                <select
-                  value={`${sortBy.key}:${sortBy.dir}`}
-                  onChange={(e) => {
-                    const [k, d] = e.target.value.split(':')
-                    setSortBy({ key: k, dir: d })
-                  }}
-                >
-                  <option value="created:desc">Newest</option>
-                  <option value="created:asc">Oldest</option>
-                  <option value="priority_id:desc">Priority</option>
-                  <option value="number:asc">Number</option>
-                </select>
-              </div>
-            </div>
-            {loading && <div className="status">Loading...</div>}
-            {error && <div className="status error">Error: {error}</div>}
-
-            {!loading && !error && (
-              <div className="table-wrap">
-                <table className="tickets">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Number</th>
-                      <th>Priority</th>
-                      <th>Subject</th>
-                      <th>Status</th>
-                      <th>Dept</th>
-                      <th>Created</th>
-                      <th>User</th>
-                      <th>Message</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visible.map((t) => {
-                      const pLabel = priorityLabel(t.priority_id)
-                      return (
-                        <tr key={t.id}>
-                          <td>{t.id}</td>
-                          <td>{t.number}</td>
-                          <td>
-                            <span className={`priority-pill p-${pLabel.toLowerCase()}`}>{pLabel}</span>
-                          </td>
-                          <td className="subject">{t.subject}</td>
-                          <td>
-                            <div className="status-cell">
-                              <span className={`dot ${statusDot(t.status)}`}></span>
-                              <span className="status-text">{t.status}</span>
-                            </div>
-                          </td>
-                          <td>{t.dept}</td>
-                          <td>{prettyDate(t.created)}</td>
-                          <td>{t.user?.name?.name || t.user?.email?.email || '-'}</td>
-                          <td className="message">{t.message}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </main>
-
-          <aside className="alerts">
-            <h4>Live Alerts - SLA Breaches</h4>
-            {slaBreaches.length === 0 && <div className="small-muted">No breaches</div>}
-            {slaBreaches.slice(0, 8).map((b) => (
-              <div key={b.id} className="alert">
-                <div className="alert-left">
-                  <div className="alert-subject">
-                    #{b.number} - {b.subject}
-                  </div>
-                  <div className="small-muted">
-                    {b.user?.name?.name || b.user?.email?.email} - {prettyDate(b.created)}
-                  </div>
-                </div>
-                <div className="alert-right">
-                  <div className="pill">{Math.round(secondsSinceCreated(b.created) / 3600)}h</div>
-                </div>
-              </div>
-            ))}
-          </aside>
+          <SlaAlerts slaBreaches={slaBreaches} />
         </div>
       </div>
     </div>

@@ -119,7 +119,7 @@ export function prettyDate(s) {
 
 export function statusDot(status) {
   const s = (status || '').toLowerCase()
-  if (s.includes('open')) return 'green'
+  if (s.includes('open') || s.includes('progress')) return 'green'
   if (s.includes('pend')) return 'yellow'
   if (s.includes('clos')) return 'gray'
   return 'gray'

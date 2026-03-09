@@ -1,0 +1,14 @@
+{
+  "name": "osTicket Analytics Dashboard",
+  "short_name": "osTicket Analytics",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "display": "standalone"
+}

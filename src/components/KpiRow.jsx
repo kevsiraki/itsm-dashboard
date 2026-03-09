@@ -26,7 +26,7 @@ export default function KpiRow({ metrics, trendData, throughput, p99Hours }) {
         </ResponsiveContainer>
       </KPI>
 
-      <KPI label="Open Work Queue" value={metrics.open} delta={`${metrics.pending} pending`} color="green">
+      <KPI label="Open Work Queue" value={metrics.open} delta={`${metrics.pending} pending<br>Lorem Ipsum`} color="green">
         <ResponsiveContainer width="100%" height={36}>
           <AreaChart data={throughput}>
             <Area type="monotone" dataKey="count" stroke="#34c759" fill="#34c759" fillOpacity={0.16} />

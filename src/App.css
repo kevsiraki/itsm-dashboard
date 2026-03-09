@@ -434,8 +434,20 @@ select:hover {
 
 .actions {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 185px;
+}
+
+.control-group select {
+  width: 100%;
 }
 
 .small-muted {
@@ -768,7 +780,7 @@ button {
   }
 
   .actions {
-    justify-content: space-between;
+    justify-content: flex-start;
     flex-wrap: wrap;
     row-gap: 8px;
   }
@@ -810,6 +822,11 @@ button {
 
   .actions {
     width: 100%;
+  }
+
+  .control-group {
+    width: 100%;
+    min-width: 0;
   }
 
   .actions .btn,

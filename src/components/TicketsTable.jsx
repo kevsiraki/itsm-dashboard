@@ -9,6 +9,9 @@ export default function TicketsTable({
   setQuery,
   sortBy,
   setSortBy,
+  filterBy,
+  setFilterBy,
+  filterOptions,
   visible,
 }) {
   return (
@@ -24,19 +27,31 @@ export default function TicketsTable({
           <button className="btn" onClick={() => exportCSV(visible, 'tickets.csv')}>
             Export as CSV
           </button>
-          <div className="small-muted">Sort by</div>
-          <select
-            value={`${sortBy.key}:${sortBy.dir}`}
-            onChange={(e) => {
-              const [k, d] = e.target.value.split(':')
-              setSortBy({ key: k, dir: d })
-            }}
-          >
-            <option value="created:asc">Created (Newest first)</option>
-            <option value="created:desc">Created (Oldest first)</option>
-            <option value="priority_id:desc">Priority (Highest first)</option>
-            <option value="number:asc">Ticket number (A-Z)</option>
-          </select>
+          <div className="control-group">
+            <div className="small-muted">Filter by</div>
+            <select value={filterBy} onChange={(e) => setFilterBy(e.target.value)}>
+              {(filterOptions || []).map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="control-group">
+            <div className="small-muted">Sort by</div>
+            <select
+              value={`${sortBy.key}:${sortBy.dir}`}
+              onChange={(e) => {
+                const [k, d] = e.target.value.split(':')
+                setSortBy({ key: k, dir: d })
+              }}
+            >
+              <option value="created:asc">Created (Newest first)</option>
+              <option value="created:desc">Created (Oldest first)</option>
+              <option value="priority_id:desc">Priority (Highest first)</option>
+              <option value="number:asc">Ticket number (A-Z)</option>
+            </select>
+          </div>
         </div>
       </div>
       {loading && <div className="status">Loading ticket data...</div>}

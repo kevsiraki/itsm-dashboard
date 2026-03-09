@@ -1,4 +1,49 @@
 // Utility functions for metrics and data transformations
+function parseCreatedDate(created) {
+  if (created == null) return null
+  if (created instanceof Date) return isNaN(created) ? null : created
+
+  if (typeof created === 'number') {
+    const ms = created > 1e12 ? created : created * 1000
+    const d = new Date(ms)
+    return isNaN(d) ? null : d
+  }
+
+  const raw = String(created).trim()
+  if (!raw) return null
+
+  if (/^\d+$/.test(raw)) {
+    const n = Number(raw)
+    const ms = n > 1e12 ? n : n * 1000
+    const d = new Date(ms)
+    return isNaN(d) ? null : d
+  }
+
+  const normalized = raw.includes(' ') ? raw.replace(' ', 'T') : raw
+  const d = new Date(normalized)
+  if (!isNaN(d)) return d
+
+  // Fallback for SQL-like timestamps with optional microseconds:
+  // YYYY-MM-DD HH:mm:ss(.ffffff)
+  const sqlMatch = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[ T])(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?$/,
+  )
+  if (sqlMatch) {
+    const year = Number(sqlMatch[1])
+    const month = Number(sqlMatch[2]) - 1
+    const day = Number(sqlMatch[3])
+    const hour = Number(sqlMatch[4] || 0)
+    const minute = Number(sqlMatch[5] || 0)
+    const second = Number(sqlMatch[6] || 0)
+    const frac = String(sqlMatch[7] || '')
+    const ms = frac ? Number((frac + '000').slice(0, 3)) : 0
+    const parsed = new Date(year, month, day, hour, minute, second, ms)
+    return isNaN(parsed) ? null : parsed
+  }
+
+  return null
+}
+
 export function percentile(values = [], p = 0.5) {
   if (!values.length) return 0
   const arr = values.slice().sort((a, b) => a - b)
@@ -32,10 +77,8 @@ export function groupByHour(tickets = [], hours = 24) {
   }
 
   tickets.forEach((t) => {
-    if (!t.created) return
-    const ts = t.created.replace(' ', 'T')
-    const d = new Date(ts)
-    if (isNaN(d)) return
+    const d = parseCreatedDate(t.created)
+    if (!d) return
     const key = d.toISOString().slice(0, 13)
     if (key in buckets) buckets[key]++
   })
@@ -44,10 +87,11 @@ export function groupByHour(tickets = [], hours = 24) {
 }
 
 export function secondsSinceCreated(created) {
-  if (!created) return null
-  const d = new Date((created || '').replace(' ', 'T'))
-  if (isNaN(d)) return null
-  return (Date.now() - d.getTime()) / 1000
+  const d = parseCreatedDate(created)
+  if (!d) return null
+  const sec = (Date.now() - d.getTime()) / 1000
+  if (!Number.isFinite(sec)) return null
+  return sec < 0 ? 0 : sec
 }
 
 export function exportCSV(rows = [], filename = 'export.csv') {

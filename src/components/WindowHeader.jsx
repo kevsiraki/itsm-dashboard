@@ -12,7 +12,7 @@ export default function WindowHeader({
   openRate,
   emergency,
   p50Hours,
-  ageROC,
+  throughputROC,
 }) {
   return (
     <>
@@ -71,7 +71,7 @@ export default function WindowHeader({
         <div className="exec-divider"></div>
         <div className="exec-item">
           <span className="exec-label">Throughput Trend Signal</span>
-          <span className="exec-value">{ageROC >= 0 ? `+${ageROC}%` : `${ageROC}%`}</span>
+          <span className="exec-value">{throughputROC >= 0 ? `+${throughputROC}%` : `${throughputROC}%`}</span>
         </div>
       </section>
     </>

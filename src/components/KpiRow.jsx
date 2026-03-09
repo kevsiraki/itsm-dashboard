@@ -26,7 +26,7 @@ export default function KpiRow({ metrics, trendData, throughput, p99Hours }) {
         </ResponsiveContainer>
       </KPI>
 
-      <KPI label="Open Work Queue" value={metrics.open} delta={`${metrics.pending} pending`} color="green">
+      <KPI label="Open Work Queue" value={metrics.open} /*delta={`${metrics.pending} pending`}*/ color="green">
         <ResponsiveContainer width="100%" height={36}>
           <AreaChart data={throughput}>
             <Area type="monotone" dataKey="count" stroke="#34c759" fill="#34c759" fillOpacity={0.16} />
@@ -42,7 +42,7 @@ export default function KpiRow({ metrics, trendData, throughput, p99Hours }) {
         </ResponsiveContainer>
       </KPI>
 
-      <KPI label="High Priority Queue" value={metrics.highPrio} delta={`P99 age: ${p99Hours}`} color="yellow">
+      <KPI label="High Priority Queue" value={metrics.highPrio} /*delta={`P99 age: ${p99Hours}`}*/ color="yellow">
         <ResponsiveContainer width="100%" height={36}>
           <LineChart data={throughput}>
             <Line type="monotone" dataKey="count" stroke="#ff9f0a" strokeWidth={2} dot={false} />
@@ -50,7 +50,7 @@ export default function KpiRow({ metrics, trendData, throughput, p99Hours }) {
         </ResponsiveContainer>
       </KPI>
 
-      <KPI label="Emergency Tickets" value={metrics.emergency} delta={`SLA exposure: ${metrics.breachRate}%`} color="red" />
+      <KPI label="Emergency Tickets" value={metrics.emergency} delta={`Active SLA exposure: ${metrics.breachRate}%`} color="red" />
       <KPI label="Average Ticket Age" value={metrics.avgAge} delta={`${metrics.breaches} active SLA breaches`} color="blue" />
     </section>
   )

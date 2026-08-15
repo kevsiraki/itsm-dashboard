@@ -20,7 +20,7 @@ export default function WindowHeader({
         <button className="theme-toggle" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}>
           {isDark ? 'Switch to Light' : 'Switch to Dark'}
         </button>
-        <div className="window-title">Service Desk Operations Console</div>
+        <div className="window-title">Service Delivery Console</div>
         <div className="toolbar-actions">
           <button className="btn ghost" onClick={() => setPaused((v) => !v)}>
             {paused ? 'Resume Data Feed' : 'Pause Data Feed'}
